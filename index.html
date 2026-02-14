@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LOSH Yahtzee Multiplayer</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="custom-events.js"></script>
+</head>
+<body>
+    <!-- Main Menu Screen -->
+    <div id="menu-screen" class="screen active">
+        <div class="menu-container">
+            <h1 class="game-title">
+                <span class="title-line">LOSH YAHTZEE</span>
+                <span class="title-sub">MULTIPLAYER</span>
+            </h1>
+            <div class="menu-buttons">
+                <button class="menu-btn" id="local-game-btn">
+                    <span class="btn-icon">🎲</span>
+                    <span class="btn-text">Local Game</span>
+                </button>
+                <button class="menu-btn" id="online-game-btn">
+                    <span class="btn-icon">🌐</span>
+                    <span class="btn-text">Online Game</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Local Game Setup Screen -->
+    <div id="local-setup-screen" class="screen">
+        <div class="setup-container">
+            <h2 class="screen-title">LOCAL GAME SETUP</h2>
+            
+            <!-- Player Count Selector -->
+            <div class="player-count-selector">
+                <label>Number of Players:</label>
+                <div class="player-count-buttons">
+                    <button class="count-btn" data-count="1">1</button>
+                    <button class="count-btn" data-count="2">2</button>
+                    <button class="count-btn active" data-count="3">3</button>
+                    <button class="count-btn" data-count="4">4</button>
+                </div>
+            </div>
+
+            <div class="player-setup" id="player-inputs">
+                <div class="player-input-group" data-player="1">
+                    <label>Player 1 Name:</label>
+                    <input type="text" id="local-player1" class="player-input" placeholder="Player 1" maxlength="12">
+                </div>
+                <div class="player-input-group" data-player="2">
+                    <label>Player 2 Name:</label>
+                    <input type="text" id="local-player2" class="player-input" placeholder="Player 2" maxlength="12">
+                </div>
+                <div class="player-input-group" data-player="3">
+                    <label>Player 3 Name:</label>
+                    <input type="text" id="local-player3" class="player-input" placeholder="Player 3" maxlength="12">
+                </div>
+                <div class="player-input-group" data-player="4" style="display: none;">
+                    <label>Player 4 Name:</label>
+                    <input type="text" id="local-player4" class="player-input" placeholder="Player 4" maxlength="12">
+                </div>
+            </div>
+            <div class="setup-buttons">
+                <button class="secondary-btn" id="back-from-local">Back</button>
+                <button class="primary-btn" id="start-local-game">Start Game</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Online Lobby Screen -->
+    <div id="lobby-screen" class="screen">
+        <div class="lobby-container">
+            <h2 class="screen-title">ONLINE LOBBY</h2>
+            
+            <!-- Connection Status -->
+            <div id="connection-status" class="status-badge disconnected">
+                <span class="status-dot"></span>
+                <span class="status-text">Connecting...</span>
+            </div>
+
+            <!-- Create/Join Room -->
+            <div id="lobby-actions" class="lobby-actions">
+                <div class="lobby-section">
+                    <h3>Create Room</h3>
+                    <div class="input-group">
+                        <input type="text" id="player-name" class="player-input" placeholder="Your Name" maxlength="12">
+                        <button class="primary-btn" id="create-room-btn">Create Room</button>
+                    </div>
+                </div>
+                <div class="lobby-divider">OR</div>
+                <div class="lobby-section">
+                    <h3>Join Room</h3>
+                    <div class="input-group">
+                        <input type="text" id="join-player-name" class="player-input" placeholder="Your Name" maxlength="12">
+                        <input type="text" id="room-code" class="player-input" placeholder="Room Code" maxlength="6">
+                        <button class="primary-btn" id="join-room-btn">Join Room</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Room View (shown after creating/joining) -->
+            <div id="room-view" class="room-view" style="display: none;">
+                <div class="room-header">
+                    <h3>Room Code: <span id="display-room-code" class="room-code">------</span></h3>
+                    <button class="copy-btn" id="copy-code-btn">Copy Code</button>
+                </div>
+                <div class="players-waiting">
+                    <h4>Players in Room:</h4>
+                    <div id="players-list" class="players-list"></div>
+                    <div class="waiting-message">Waiting for players... (Need 3 players to start)</div>
+                </div>
+                <button class="secondary-btn" id="leave-room-btn">Leave Room</button>
+            </div>
+
+            <button class="secondary-btn" id="back-from-lobby">Back to Menu</button>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="screen">
+        <div class="game-container">
+            <!-- Game Header -->
+            <div class="game-header">
+                <div class="game-info">
+                    <h2 class="game-brand">LOSH YAHTZEE</h2>
+                    <div class="room-info" id="game-room-info"></div>
+                    <div class="turn-indicator" id="turn-indicator">Waiting...</div>
+                </div>
+                <div class="rolls-left" id="rolls-left">Rolls: 3</div>
+            </div>
+
+            <!-- Players Scoreboard -->
+            <div class="players-scoreboard" id="players-scoreboard">
+                <!-- Player scoreboards will be injected here -->
+            </div>
+
+            <!-- Dice Section -->
+            <div class="dice-section">
+                <div id="dice-container" class="dice-container">
+                    <button class="die" data-index="0">
+                        <span class="die-value">?</span>
+                    </button>
+                    <button class="die" data-index="1">
+                        <span class="die-value">?</span>
+                    </button>
+                    <button class="die" data-index="2">
+                        <span class="die-value">?</span>
+                    </button>
+                    <button class="die" data-index="3">
+                        <span class="die-value">?</span>
+                    </button>
+                    <button class="die" data-index="4">
+                        <span class="die-value">?</span>
+                    </button>
+                </div>
+                <button id="roll-dice" class="roll-btn">ROLL DICE</button>
+            </div>
+
+            <!-- Active Player Scorecard - All Players Side by Side -->
+            <div class="scorecard-section" id="scorecard-section">
+                <h3 class="scorecard-title">Scorecard</h3>
+                <div class="scorecard-wrapper">
+                    <table id="scorecard" class="scorecard">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th id="player1-header">Player 1</th>
+                                <th id="player2-header" style="display: none;">Player 2</th>
+                                <th id="player3-header" style="display: none;">Player 3</th>
+                                <th id="player4-header" style="display: none;">Player 4</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr data-category="ones">
+                                <td>Ones</td>
+                                <td class="upper-section"><button class="score-btn" data-category="ones" data-player="0">-</button></td>
+                                <td class="upper-section player-col-2"><button class="score-btn" data-category="ones" data-player="1">-</button></td>
+                                <td class="upper-section player-col-3"><button class="score-btn" data-category="ones" data-player="2">-</button></td>
+                                <td class="upper-section player-col-4"><button class="score-btn" data-category="ones" data-player="3">-</button></td>
+                            </tr>
+                            <tr data-category="twos">
+                                <td>Twos</td>
+                                <td class="upper-section"><button class="score-btn" data-category="twos" data-player="0">-</button></td>
+                                <td class="upper-section player-col-2"><button class="score-btn" data-category="twos" data-player="1">-</button></td>
+                                <td class="upper-section player-col-3"><button class="score-btn" data-category="twos" data-player="2">-</button></td>
+                                <td class="upper-section player-col-4"><button class="score-btn" data-category="twos" data-player="3">-</button></td>
+                            </tr>
+                            <tr data-category="threes">
+                                <td>Threes</td>
+                                <td class="upper-section"><button class="score-btn" data-category="threes" data-player="0">-</button></td>
+                                <td class="upper-section player-col-2"><button class="score-btn" data-category="threes" data-player="1">-</button></td>
+                                <td class="upper-section player-col-3"><button class="score-btn" data-category="threes" data-player="2">-</button></td>
+                                <td class="upper-section player-col-4"><button class="score-btn" data-category="threes" data-player="3">-</button></td>
+                            </tr>
+                            <tr data-category="fours">
+                                <td>Fours</td>
+                                <td class="upper-section"><button class="score-btn" data-category="fours" data-player="0">-</button></td>
+                                <td class="upper-section player-col-2"><button class="score-btn" data-category="fours" data-player="1">-</button></td>
+                                <td class="upper-section player-col-3"><button class="score-btn" data-category="fours" data-player="2">-</button></td>
+                                <td class="upper-section player-col-4"><button class="score-btn" data-category="fours" data-player="3">-</button></td>
+                            </tr>
+                            <tr data-category="fives">
+                                <td>Fives</td>
+                                <td class="upper-section"><button class="score-btn" data-category="fives" data-player="0">-</button></td>
+                                <td class="upper-section player-col-2"><button class="score-btn" data-category="fives" data-player="1">-</button></td>
+                                <td class="upper-section player-col-3"><button class="score-btn" data-category="fives" data-player="2">-</button></td>
+                                <td class="upper-section player-col-4"><button class="score-btn" data-category="fives" data-player="3">-</button></td>
+                            </tr>
+                            <tr data-category="sixes">
+                                <td>Sixes</td>
+                                <td class="upper-section"><button class="score-btn" data-category="sixes" data-player="0">-</button></td>
+                                <td class="upper-section player-col-2"><button class="score-btn" data-category="sixes" data-player="1">-</button></td>
+                                <td class="upper-section player-col-3"><button class="score-btn" data-category="sixes" data-player="2">-</button></td>
+                                <td class="upper-section player-col-4"><button class="score-btn" data-category="sixes" data-player="3">-</button></td>
+                            </tr>
+                            <tr class="bonus-row">
+                                <td>Upper Bonus</td>
+                                <td><span class="upper-bonus" data-player="0">0</span></td>
+                                <td class="player-col-2"><span class="upper-bonus" data-player="1">0</span></td>
+                                <td class="player-col-3"><span class="upper-bonus" data-player="2">0</span></td>
+                                <td class="player-col-4"><span class="upper-bonus" data-player="3">0</span></td>
+                            </tr>
+                            <tr data-category="three_of_a_kind">
+                                <td>Three of a Kind</td>
+                                <td><button class="score-btn" data-category="three_of_a_kind" data-player="0">-</button></td>
+                                <td class="player-col-2"><button class="score-btn" data-category="three_of_a_kind" data-player="1">-</button></td>
+                                <td class="player-col-3"><button class="score-btn" data-category="three_of_a_kind" data-player="2">-</button></td>
+                                <td class="player-col-4"><button class="score-btn" data-category="three_of_a_kind" data-player="3">-</button></td>
+                            </tr>
+                            <tr data-category="four_of_a_kind">
+                                <td>Four of a Kind</td>
+                                <td><button class="score-btn" data-category="four_of_a_kind" data-player="0">-</button></td>
+                                <td class="player-col-2"><button class="score-btn" data-category="four_of_a_kind" data-player="1">-</button></td>
+                                <td class="player-col-3"><button class="score-btn" data-category="four_of_a_kind" data-player="2">-</button></td>
+                                <td class="player-col-4"><button class="score-btn" data-category="four_of_a_kind" data-player="3">-</button></td>
+                            </tr>
+                            <tr data-category="full_house">
+                                <td>Full House</td>
+                                <td><button class="score-btn" data-category="full_house" data-player="0">-</button></td>
+                                <td class="player-col-2"><button class="score-btn" data-category="full_house" data-player="1">-</button></td>
+                                <td class="player-col-3"><button class="score-btn" data-category="full_house" data-player="2">-</button></td>
+                                <td class="player-col-4"><button class="score-btn" data-category="full_house" data-player="3">-</button></td>
+                            </tr>
+                            <tr data-category="small_straight">
+                                <td>Small Straight</td>
+                                <td><button class="score-btn" data-category="small_straight" data-player="0">-</button></td>
+                                <td class="player-col-2"><button class="score-btn" data-category="small_straight" data-player="1">-</button></td>
+                                <td class="player-col-3"><button class="score-btn" data-category="small_straight" data-player="2">-</button></td>
+                                <td class="player-col-4"><button class="score-btn" data-category="small_straight" data-player="3">-</button></td>
+                            </tr>
+                            <tr data-category="large_straight">
+                                <td>Large Straight</td>
+                                <td><button class="score-btn" data-category="large_straight" data-player="0">-</button></td>
+                                <td class="player-col-2"><button class="score-btn" data-category="large_straight" data-player="1">-</button></td>
+                                <td class="player-col-3"><button class="score-btn" data-category="large_straight" data-player="2">-</button></td>
+                                <td class="player-col-4"><button class="score-btn" data-category="large_straight" data-player="3">-</button></td>
+                            </tr>
+                            <tr data-category="yahtzee">
+                                <td>YAHTZEE</td>
+                                <td><button class="score-btn" data-category="yahtzee" data-player="0">-</button></td>
+                                <td class="player-col-2"><button class="score-btn" data-category="yahtzee" data-player="1">-</button></td>
+                                <td class="player-col-3"><button class="score-btn" data-category="yahtzee" data-player="2">-</button></td>
+                                <td class="player-col-4"><button class="score-btn" data-category="yahtzee" data-player="3">-</button></td>
+                            </tr>
+                            <tr data-category="chance">
+                                <td>Chance</td>
+                                <td><button class="score-btn" data-category="chance" data-player="0">-</button></td>
+                                <td class="player-col-2"><button class="score-btn" data-category="chance" data-player="1">-</button></td>
+                                <td class="player-col-3"><button class="score-btn" data-category="chance" data-player="2">-</button></td>
+                                <td class="player-col-4"><button class="score-btn" data-category="chance" data-player="3">-</button></td>
+                            </tr>
+                            <tr class="total-row">
+                                <td>Total Score</td>
+                                <td><span class="total-score" data-player="0">0</span></td>
+                                <td class="player-col-2"><span class="total-score" data-player="1">0</span></td>
+                                <td class="player-col-3"><span class="total-score" data-player="2">0</span></td>
+                                <td class="player-col-4"><span class="total-score" data-player="3">0</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <button class="secondary-btn leave-game-btn" id="leave-game-btn">Leave Game</button>
+        </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="gameover-screen" class="screen">
+        <div class="gameover-container">
+            <h1 class="gameover-title">GAME OVER</h1>
+            <div id="final-scores" class="final-scores">
+                <!-- Final scores will be injected here -->
+            </div>
+            <div class="gameover-buttons">
+                <button class="primary-btn" id="play-again-btn">Play Again</button>
+                <button class="secondary-btn" id="back-to-menu-btn">Back to Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="game-footer">
+        <p>V2 [14-02-2026]</p>
+    </footer>
+
+    <script src="game.js"></script>
+</body>
+</html>
