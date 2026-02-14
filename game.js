@@ -5,7 +5,14 @@
 
 // Configuration
 const CONFIG = {
-    WEBSOCKET_URL: 'wss://loshyahtzee-github-io.onrender.com', // Replace with your WebSocket server URL
+    // WebSocket Server URL
+    // ====================================
+    // CHANGE THIS to your deployed server URL:
+    WEBSOCKET_URL: 'wss://loshyahtzee-github-io.onrender.com',
+    
+    // For local testing, change to: 'ws://localhost:8080'
+    // For production, use: 'wss://your-server.onrender.com'
+    
     MAX_PLAYERS: 3,
     ROLLS_PER_TURN: 3,
     CATEGORIES: [
@@ -164,12 +171,14 @@ document.getElementById('start-local-game').addEventListener('click', () => {
 function initializeWebSocket() {
     updateConnectionStatus('disconnected', 'Connecting...');
     
+    console.log('Attempting to connect to:', CONFIG.WEBSOCKET_URL);
+    
     try {
         game.socket = new WebSocket(CONFIG.WEBSOCKET_URL);
         
         game.socket.onopen = () => {
             updateConnectionStatus('connected', 'Connected');
-            console.log('WebSocket connected');
+            console.log('✅ WebSocket connected successfully');
         };
         
         game.socket.onmessage = (event) => {
@@ -177,16 +186,22 @@ function initializeWebSocket() {
         };
         
         game.socket.onerror = (error) => {
-            console.error('WebSocket error:', error);
+            console.error('❌ WebSocket error:', error);
+            console.error('Failed to connect to:', CONFIG.WEBSOCKET_URL);
             updateConnectionStatus('disconnected', 'Connection error');
         };
         
-        game.socket.onclose = () => {
+        game.socket.onclose = (event) => {
             updateConnectionStatus('disconnected', 'Disconnected');
-            console.log('WebSocket disconnected');
+            console.log('WebSocket closed. Code:', event.code, 'Reason:', event.reason);
+            
+            // If server might be sleeping (Render free tier), show helpful message
+            if (event.code === 1006) {
+                console.log('💡 Tip: If using Render free tier, server might be sleeping. First connection can take 30-60 seconds.');
+            }
         };
     } catch (error) {
-        console.error('Failed to connect to WebSocket:', error);
+        console.error('Failed to create WebSocket:', error);
         updateConnectionStatus('disconnected', 'Failed to connect');
         showOfflineMessage();
     }
@@ -196,8 +211,39 @@ function showOfflineMessage() {
     const lobbyActions = document.getElementById('lobby-actions');
     lobbyActions.innerHTML = `
         <div style="text-align: center; padding: 2rem;">
-            <p style="color: var(--danger-color); margin-bottom: 1rem;">Unable to connect to the game server.</p>
-            <p style="color: var(--text-secondary);">The server might be offline. Please try again later or play a local game.</p>
+            <p style="color: var(--danger-color); margin-bottom: 1rem; font-weight: 700;">⚠️ Unable to connect to the game server</p>
+            
+            <div style="background: rgba(255, 51, 102, 0.1); padding: 1.5rem; border-radius: 10px; border: 2px solid var(--danger-color); margin-bottom: 1rem;">
+                <p style="color: var(--text-secondary); margin-bottom: 0.5rem;"><strong>Current server URL:</strong></p>
+                <code style="background: var(--darker-bg); padding: 0.5rem; display: block; border-radius: 5px; color: var(--neon-cyan); margin-bottom: 1rem;">${CONFIG.WEBSOCKET_URL}</code>
+                
+                <p style="color: var(--text-secondary); font-size: 0.9rem; text-align: left; margin-top: 1rem;">
+                    <strong>Possible reasons:</strong><br>
+                    • Server is not running<br>
+                    • Wrong server URL configured<br>
+                    • Network/firewall blocking connection
+                </p>
+            </div>
+            
+            <div style="background: rgba(0, 255, 136, 0.1); padding: 1.5rem; border-radius: 10px; border: 2px solid var(--success-color); text-align: left;">
+                <p style="color: var(--success-color); margin-bottom: 0.5rem; font-weight: 700;">💡 How to fix:</p>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.6;">
+                    <strong>For Local Testing:</strong><br>
+                    1. Make sure server is running: <code style="background: var(--darker-bg); padding: 0.2rem 0.4rem;">npm start</code> in server/ folder<br>
+                    2. If testing on same device, it should auto-connect to localhost<br>
+                    3. If testing on different devices (same WiFi), edit game.js line 12 with your computer's IP
+                </p>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.6; margin-top: 1rem;">
+                    <strong>For Production:</strong><br>
+                    1. Deploy server to Render/Railway/Glitch (see DEPLOYMENT.md)<br>
+                    2. Edit game.js line 9 with your deployed server URL<br>
+                    3. URL must start with <code style="background: var(--darker-bg); padding: 0.2rem 0.4rem;">wss://</code> (not https://)
+                </p>
+            </div>
+            
+            <p style="color: var(--text-secondary); margin-top: 1.5rem; font-size: 0.9rem;">
+                Or play a <strong>Local Game</strong> instead (no server needed!)
+            </p>
         </div>
     `;
 }
